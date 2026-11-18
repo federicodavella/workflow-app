@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Federico D'Avella | Workflow</title>
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Workflow">
+<link rel="icon" href="/icon-180.png">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #f5f5f7; }
+  body { font: 15px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; }
+  #wf-boot { min-height: 100%; display: grid; place-items: center; text-align: center; padding: 24px; box-sizing: border-box; }
+  #wf-boot img { width: 64px; height: 64px; border-radius: 16px; animation: wfpulse 1.6s ease-in-out infinite; }
+  #wf-boot p { margin: 16px 0 0; color: #86868b; letter-spacing: .02em; }
+  #wf-boot a, #wf-boot button { color: #2997ff; background: none; border: 0; font: inherit; cursor: pointer; padding: 0; text-decoration: none; }
+  #wf-boot .err { max-width: 340px; }
+  @keyframes wfpulse { 50% { opacity: .45; transform: scale(.96); } }
+  @media (prefers-reduced-motion: reduce) { #wf-boot img { animation: none; } }
+</style>
+</head>
+<body>
+<div id="wf-boot"><div><img src="/icon-180.png" alt=""><p id="wf-msg">Caricamento…</p></div></div>
+<script>
+/* Federico D'Avella | Workflow — pagina di app.federicodavella.com.
+   Carica l'app vera dal "motore" su Google Apps Script (sempre l'ultima versione) e la mostra qui.
+   Una copia dell'ultima versione resta sul telefono/computer: se il motore è lento, l'app si apre subito con quella
+   e la versione nuova viene usata alla prossima apertura. */
+(function () {
+  var EXEC = "https://script.google.com/macros/s/AKfycbwcfXZmdbpUwdDFBPRaLBot-q4M7a3ZP1FduyQW0DtR8x2eXvz_Ya8CCekZ0S-6YSRbUA/exec";
+  var KEY = "wf-page-v1", shown = false;
+  function show(html) {
+    if (shown) return; shown = true;
+    document.open(); document.write(html); document.close();
+  }
+  function valid(h) { return typeof h === "string" && /^\s*<!doctype html/i.test(h) && h.length > 20000; }
+  function fail() {
+    if (shown) return;
+    var m = document.getElementById("wf-msg");
+    if (m) m.parentNode.innerHTML = '<img src="/icon-180.png" alt=""><p class="err">Non riesco a raggiungere l\'app in questo momento. Controlla la connessione e <button type="button" onclick="location.reload()">riprova</button>.</p>';
+  }
+  var cached = null;
+  try { cached = localStorage.getItem(KEY); } catch (e) { cached = null; }
+  if (!valid(cached)) cached = null;
+  var fresh = fetch(EXEC + "?raw=1", { cache: "no-store" })
+    .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+    .then(function (h) {
+      if (!valid(h)) throw new Error("pagina non valida");
+      try { localStorage.setItem(KEY, h); } catch (e) { /* spazio pieno: si riscarica la prossima volta */ }
+      return h;
+    });
+  if (cached) {
+    /* se la versione nuova arriva in fretta usiamo quella, altrimenti si apre subito la copia salvata */
+    var t = setTimeout(function () { show(cached); }, 1200);
+    fresh.then(function (h) { clearTimeout(t); show(h); }, function () { clearTimeout(t); show(cached); });
+  } else {
+    fresh.then(show, fail);
+  }
+})();
+</script>
+</body>
+</html>
