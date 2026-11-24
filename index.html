@@ -54,9 +54,10 @@
       return h;
     });
   if (cached) {
-    /* se la versione nuova arriva in fretta usiamo quella, altrimenti si apre subito la copia salvata */
-    var t = setTimeout(function () { show(cached); }, 1200);
-    fresh.then(function (h) { clearTimeout(t); show(h); }, function () { clearTimeout(t); show(cached); });
+    /* l'app si apre subito con la copia salvata sul dispositivo; la versione nuova viene scaricata
+       intanto, in silenzio, e viene usata alla prossima apertura */
+    setTimeout(function () { show(cached); }, 0);
+    fresh.catch(function () { /* niente rete: resta la copia salvata */ });
   } else {
     fresh.then(show, fail);
   }
